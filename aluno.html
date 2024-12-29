@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      const { Client } = require("pg");
+      const express = require("express");
+      const session = require("express-session");
+
+      const app = express();
+      app.use(express.urlencoded({ extended: true })); // Para parsear dados de formulários
+      app.use(
+        session({
+          secret: "seu-segredo-aqui", // Defina seu segredo de sessão
+          resave: false,
+          saveUninitialized: true,
+        })
+      );
+
+      // Verifica se a sessão está ativa
+      app.use((req, res, next) => {
+        if (!req.session.nome) {
+          return res.redirect("/login");
+        }
+        next();
+      });
+
+      // Configuração do cliente PostgreSQL
+      const client = new Client({
+        user: "", // Altere conforme necessário
+        host: "",
+        database: "",
+        password: "", // Altere conforme necessário
+        port: 5432,
+      });
+
+      client
+        .connect()
+        .then(() => console.log("Conectado ao PostgreSQL"))
+        .catch((err) => console.error("Erro ao conectar ao PostgreSQL", err));
+
+      // Rota para processar reservas
+      app.post("/reservar", async (req, res) => {
+        const livroId = req.body.reservar;
+        let reservationSuccess = false;
+
+        try {
+          // Verificar a disponibilidade de exemplares
+          const livroResult = await client.query(
+            "SELECT exemplares_disponiveis FROM livros WHERE id = $1",
+            [livroId]
+          );
+
+          if (livroResult.rows.length > 0) {
+            const exemplaresDisponiveis =
+              livroResult.rows[0].exemplares_disponiveis;
+
+            if (exemplaresDisponiveis > 0) {
+              // Atualizar o número de exemplares disponíveis
+              const novosExemplares = exemplaresDisponiveis - 1;
+
+              await client.query(
+                "UPDATE livros SET exemplares_disponiveis = $1 WHERE id = $2",
+                [novosExemplares, livroId]
+              );
+
+              // Inserir registro na tabela emprestimos
+              const alunoId = req.session.id; // Presumindo que você armazena o ID do aluno na sessão
+              const dataEmprestimo = new Date().toISOString().split("T")[0];
+              const dataDevolucao = new Date(
+                Date.now() + 7 * 24 * 60 * 60 * 1000
+              )
+                .toISOString()
+                .split("T")[0];
+
+              await client.query(
+                "INSERT INTO emprestimos (id_aluno, id_livro, data_emprestimo, data_devolucao) VALUES ($1, $2, $3, $4)",
+                [alunoId, livroId, dataEmprestimo, dataDevolucao]
+              );
+
+              reservationSuccess = true; // Reserva bem-sucedida
+            } else {
+              console.log("Não há exemplares disponíveis para empréstimo.");
+            }
+          } else {
+            console.log("Livro não encontrado.");
+          }
+        } catch (err) {
+          console.error("Erro ao processar a reserva:", err);
+        }
+
+        // Responder com o status da reserva ou redirecionar conforme necessário
+        if (reservationSuccess) {
+          res.send("Reserva realizada com sucesso!");
+        } else {
+          res.send("Erro ao realizar a reserva.");
+        }
+      });
+
+      // Rota para pesquisa de livros
+      app.post("/search", async (req, res) => {
+        const searchTerm = req.body.search;
+        let sql = "SELECT * FROM livros";
+
+        if (searchTerm) {
+          sql = `SELECT * FROM livros WHERE autor ILIKE $1 OR titulo ILIKE $1`;
+          const result = await client.query(sql, [`%${searchTerm}%`]);
+          res.json(result.rows); // Retorna os resultados em formato JSON
+        } else {
+          const result = await client.query(sql);
+          res.json(result.rows); // Retorna todos os livros
+        }
+      });
+
+      // Iniciar o servidor
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Servidor rodando na porta ${PORT}`);
+      });
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consulta de livros</title>
+    <style>
+        .search-btn {
+    padding: 10px;
+    border-radius: 4px;
+    border: none;
+    background-color: #444;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.reservar-btn {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+* {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #444;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        label {
+            color: #666;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border-radius: 4px;
+            border: none;
+            font-size: 16px;
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #444;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+        }
+
+        td {
+            background-color: #fff;
+            color: #444;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>
+        Bem vindo(a),
+        <script>
+          localStorage.getItem("name");
+        </script>
+        !
+      </h1>
+      <p>Aqui você pode consultar os livros disponíveis e fazer a reserva.</p>
+
+      <form method="post">
+        <label for="search">Pesquisar:</label>
+        <input
+          type="text"
+          id="search"
+          name="search"
+          required
+          placeholder="Digite aqui o autor ou título"
+        />
+        <input type="submit" value="Pesquisar" class="search-btn" />
+      </form>
+
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Autor</th>
+          <th>Título</th>
+          <th>Ano</th>
+          <th>Editora</th>
+          <th>ISBN</th>
+          <th>Reservar</th>
+        </tr>
+        <script>
+          async function carregarLivros() {
+            try {
+              const response = await fetch("/api/livros"); // Substitua pela sua rota da API
+              const livros = await response.json();
+
+              const tbody = document.querySelector("#livrosTable tbody");
+              tbody.innerHTML = ""; // Limpa o conteúdo anterior
+
+              if (livros.length > 0) {
+                let recordCount = 0; // Contador de registros
+                const disponibilidadePromises = livros.map((livro) =>
+                  verificarDisponibilidade(livro.id)
+                );
+
+                // Aguarda todas as promessas de disponibilidade
+                const disponibilidades = await Promise.all(
+                  disponibilidadePromises
+                );
+
+                livros.forEach((livro, index) => {
+                  if (recordCount >= 5) return; // Limita a 5 registros
+
+                  const tr = document.createElement("tr");
+                  tr.innerHTML = `
+                    <td>${livro.id}</td>
+                    <td>${livro.autor}</td>
+                    <td>${livro.titulo}</td>
+                    <td>${livro.ano}</td>
+                    <td>${livro.editora}</td>
+                    <td>${livro.isbn}</td>
+                    <td>${disponibilidades[index]}</td>
+                `;
+                  tbody.appendChild(tr);
+                  recordCount++;
+                });
+              } else {
+                const tr = document.createElement("tr");
+                tr.innerHTML = '<td colspan="7">Nenhum livro encontrado.</td>';
+                tbody.appendChild(tr);
+              }
+            } catch (error) {
+              console.error("Erro ao carregar livros:", error);
+            }
+          }
+
+          async function verificarDisponibilidade(livroId) {
+            try {
+              const response = await fetch(
+                `/api/livros/${livroId}/disponibilidade`
+              ); // Rota para verificar disponibilidade
+              const data = await response.json();
+
+              if (data.exemplares_disponiveis > 0) {
+                return `
+                <form method='post' action='/reservar'>
+                    <input type='hidden' name='reservar' value='${livroId}'>
+                    <input type='submit' class='reservar-btn' value='Reservar'>
+                </form>
+            `;
+              } else {
+                return "Sem exemplares disponíveis";
+              }
+            } catch (error) {
+              console.error("Erro ao verificar disponibilidade:", error);
+              return "Erro ao verificar disponibilidade";
+            }
+          }
+
+          // Chama a função ao carregar a página
+          carregarLivros();
+        </script>
+      </table>
+    </div>
+    <div class="container">
+      <br />
+      <h3 style="text-align: center">
+        <a href="login.html">Voltar para a página de login</a>
+      </h3>
+    </div>
+    <script>
+      // Supondo que você tenha uma variável `reservationSuccess` que indica se a reserva foi bem-sucedida
+      const reservationSuccess = true; // Defina isso conforme necessário
+
+      if (reservationSuccess) {
+        alert("Exemplar reservado com sucesso!");
+      }
+    </script>
+  </body>
+</html>

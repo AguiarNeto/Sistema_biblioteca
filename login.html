@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="style/style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      .popup {
+        visibility: hidden;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #ffffff;
+        border: 1px solid #000000;
+        padding: 20px;
+        z-index: 999;
+      }
+
+      .popup.show {
+        visibility: visible;
+      }
+    </style>
+    <title>Biblioteca - Login</title>
+  </head>
+  <body>
+    <h1>Bibliotech</h1>
+    <h2>Login</h2>
+    <!--Somente se for erro, depois a gente ver isso. Não sei se está correto o código-->
+    <div class="popup" id="popup">
+      <div class="popup-content">
+        <span class="popup-close" onclick="hidePopup()">&times;</span>
+        <h3>Erro de login</h3>
+        <p>
+          <script>
+            console.error()
+          </script>
+        </p>
+      </div>
+    </div>
+    <form action="login.html" method="post">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <label for="senha">Senha:</label>
+        <input type="password" name="senha" id="senha">
+        <input type="submit" value="Entrar">
+    </form>
+    <br>
+    <a href="cadastro.html">Ainda não tem cadastro? Clique aqui para se cadastrar.</a>
+
+    <script>
+        function showPopup() {
+            var popup = document.getElementById("popup");
+            popup.classList.add("show");
+        }
+        function hidePopup() {
+            var popup = document.getElementById("popup");
+            popup.classList.remove("show");
+        }
+        if(isset(error)) {
+            $(document).ready(function() {
+                showPopup();
+            });
+        }
+    </script>
+  </body>
+</html>

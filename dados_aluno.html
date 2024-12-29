@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      const { Client } = require("pg");
+      const express = require("express");
+      const session = require("express-session");
+
+      const app = express();
+      app.use(express.urlencoded({ extended: true })); // Para parsear dados de formulários
+      app.use(
+        session({
+          secret: "", // Defina seu segredo de sessão
+          resave: false,
+          saveUninitialized: true,
+        })
+      );
+
+      // Verifica se a sessão está ativa
+      app.use((req, res, next) => {
+        if (!req.session.nome) {
+          return res.redirect("/login");
+        }
+        next();
+      });
+
+      // Configuração do cliente PostgreSQL
+      const client = new Client({
+        user: "", // Altere conforme necessário
+        host: "",
+        database: "",
+        password: "", // Altere conforme necessário
+        port: 5432,
+      });
+
+      client
+        .connect()
+        .then(() => console.log("Conectado ao PostgreSQL"))
+        .catch((err) => console.error("Erro ao conectar ao PostgreSQL", err));
+
+      // Rota para processar reservas
+      app.post("/reservar", async (req, res) => {
+        const livroId = req.body.reservar;
+        let reservationSuccess = false;
+
+        try {
+          // Verificar a disponibilidade de exemplares
+          const livroResult = await client.query(
+            "SELECT exemplares_disponiveis FROM livros WHERE id = $1",
+            [livroId]
+          );
+
+          if (livroResult.rows.length > 0) {
+            const exemplaresDisponiveis =
+              livroResult.rows[0].exemplares_disponiveis;
+
+            if (exemplaresDisponiveis > 0) {
+              // Atualizar o número de exemplares disponíveis
+              const novosExemplares = exemplaresDisponiveis - 1;
+
+              await client.query(
+                "UPDATE livros SET exemplares_disponiveis = $1 WHERE id = $2",
+                [novosExemplares, livroId]
+              );
+
+              // Inserir registro na tabela emprestimos
+              const alunoId = req.session.id; // Presumindo que você armazena o ID do aluno na sessão
+              const dataEmprestimo = new Date().toISOString().split("T")[0];
+              const dataDevolucao = new Date(
+                Date.now() + 7 * 24 * 60 * 60 * 1000
+              )
+                .toISOString()
+                .split("T")[0];
+
+              await client.query(
+                "INSERT INTO emprestimos (id_aluno, id_livro, data_emprestimo, data_devolucao) VALUES ($1, $2, $3, $4)",
+                [alunoId, livroId, dataEmprestimo, dataDevolucao]
+              );
+
+              reservationSuccess = true; // Reserva bem-sucedida
+            } else {
+              console.log("Não há exemplares disponíveis para empréstimo.");
+            }
+          } else {
+            console.log("Livro não encontrado.");
+          }
+        } catch (err) {
+          console.error("Erro ao processar a reserva:", err);
+        }
+
+        // Responder com o status da reserva ou redirecionar conforme necessário
+        if (reservationSuccess) {
+          res.send("Reserva realizada com sucesso!");
+        } else {
+          res.send("Erro ao realizar a reserva.");
+        }
+      });
+
+      // Rota para pesquisa de livros
+      app.post("/search", async (req, res) => {
+        const searchTerm = req.body.search;
+        let sql = "SELECT * FROM livros";
+
+        if (searchTerm) {
+          sql = `SELECT * FROM livros WHERE autor ILIKE $1 OR titulo ILIKE $1`;
+          const result = await client.query(sql, [`%${searchTerm}%`]);
+          res.json(result.rows); // Retorna os resultados em formato JSON
+        } else {
+          const result = await client.query(sql);
+          res.json(result.rows); // Retorna todos os livros
+        }
+      });
+
+      // Iniciar o servidor
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Servidor rodando na porta ${PORT}`);
+      });
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recuperação de senha</title>
+    <style>
+      body {
+        font-family: arial, sans-serif;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        text-align: center;
+      }
+      h1 {
+        text-align: center;
+        margin-top: 0;
+        padding-top: 20px;
+      }
+      .search-container {
+        margin-bottom: 20px;
+      }
+      .search-container input[type="text"] {
+        padding: 5px;
+      }
+      .search-container input[type="submit"] {
+        padding: 5px 15px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 auto;
+        text-align: center;
+      }
+      th,
+      td {
+        border: 1px solid black;
+        padding: 8px;
+      }
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      tr:hover {
+        background-color: #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Recuperar Login e Senha</h1>
+
+      <div class="search-container">
+        <form method="search">
+          <label for="search">Pesquisar por nome:</label>
+          <input type="text" id="search" name="search" />
+          <script>
+            document.getElementById("search");
+          </script>
+          <input type="submit" value="Pesquisar" />
+        </form>
+      </div>
+      <table>
+        <tr>
+          <th>Email</th>
+          <th>Senha</th>
+        </tr>
+
+        <script>
+          //colocar python
+        </script>
+      </table>
+    </div>
+    <div class="container"><br /><br /><br />
+    <h3 style="text-align: center;">
+        <a href="admin.html">Voltar para a página administrativa</a>
+    </h3>
+    </div>
+  </body>
+</html>

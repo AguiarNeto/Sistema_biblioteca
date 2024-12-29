@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      const { Client } = require("pg");
+      const express = require("express");
+      const session = require("express-session");
+
+      const app = express();
+      app.use(express.urlencoded({ extended: true })); // Para parsear dados de formulários
+      app.use(
+        session({
+          secret: "seu-segredo-aqui", // Defina seu segredo de sessão
+          resave: false,
+          saveUninitialized: true,
+        })
+      );
+
+      // Verifica se a sessão está ativa
+      app.use((req, res, next) => {
+        if (!req.session.nome) {
+          return res.redirect("/login");
+        }
+        next();
+      });
+
+      // Configuração do cliente PostgreSQL
+      const client = new Client({
+        user: "root", // Altere conforme necessário
+        host: "localhost",
+        database: "biblioteca",
+        password: "c1macedo", // Altere conforme necessário
+        port: 5432,
+      });
+
+      client
+        .connect()
+        .then(() => console.log("Conectado ao PostgreSQL"))
+        .catch((err) => console.error("Erro ao conectar ao PostgreSQL", err));
+
+      // Rota para processar reservas
+      app.post("/reservar", async (req, res) => {
+        const livroId = req.body.reservar;
+        let reservationSuccess = false;
+
+        try {
+          // Verificar a disponibilidade de exemplares
+          const livroResult = await client.query(
+            "SELECT exemplares_disponiveis FROM livros WHERE id = $1",
+            [livroId]
+          );
+
+          if (livroResult.rows.length > 0) {
+            const exemplaresDisponiveis =
+              livroResult.rows[0].exemplares_disponiveis;
+
+            if (exemplaresDisponiveis > 0) {
+              // Atualizar o número de exemplares disponíveis
+              const novosExemplares = exemplaresDisponiveis - 1;
+
+              await client.query(
+                "UPDATE livros SET exemplares_disponiveis = $1 WHERE id = $2",
+                [novosExemplares, livroId]
+              );
+
+              // Inserir registro na tabela emprestimos
+              const alunoId = req.session.id; // Presumindo que você armazena o ID do aluno na sessão
+              const dataEmprestimo = new Date().toISOString().split("T")[0];
+              const dataDevolucao = new Date(
+                Date.now() + 7 * 24 * 60 * 60 * 1000
+              )
+                .toISOString()
+                .split("T")[0];
+
+              await client.query(
+                "INSERT INTO emprestimos (id_aluno, id_livro, data_emprestimo, data_devolucao) VALUES ($1, $2, $3, $4)",
+                [alunoId, livroId, dataEmprestimo, dataDevolucao]
+              );
+
+              reservationSuccess = true; // Reserva bem-sucedida
+            } else {
+              console.log("Não há exemplares disponíveis para empréstimo.");
+            }
+          } else {
+            console.log("Livro não encontrado.");
+          }
+        } catch (err) {
+          console.error("Erro ao processar a reserva:", err);
+        }
+
+        // Responder com o status da reserva ou redirecionar conforme necessário
+        if (reservationSuccess) {
+          res.send("Reserva realizada com sucesso!");
+        } else {
+          res.send("Erro ao realizar a reserva.");
+        }
+      });
+
+      // Rota para pesquisa de livros
+      app.post("/search", async (req, res) => {
+        const searchTerm = req.body.search;
+        let sql = "SELECT * FROM livros";
+
+        if (searchTerm) {
+          sql = `SELECT * FROM livros WHERE autor ILIKE $1 OR titulo ILIKE $1`;
+          const result = await client.query(sql, [`%${searchTerm}%`]);
+          res.json(result.rows); // Retorna os resultados em formato JSON
+        } else {
+          const result = await client.query(sql);
+          res.json(result.rows); // Retorna todos os livros
+        }
+      });
+
+      // Iniciar o servidor
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Servidor rodando na porta ${PORT}`);
+      });
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerenciamento de livro</title>
+    <style>
+      .header-row {
+        background-color: #4caf50;
+      }
+
+      .container {
+        text-align: center;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .table th,
+      .table td {
+        text-align: center;
+        vertical-align: middle;
+        padding: 10px;
+      }
+
+      .table tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      .button-container {
+        display: inline-block;
+        margin-right: 10px;
+      }
+
+      .button {
+        width: 120px;
+        background-color: #4caf50;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        padding: 5px 10px;
+        border: none;
+        cursor: pointer;
+      }
+
+      .button:hover {
+        background-color: #45a049;
+      }
+
+      .search-container {
+        margin-bottom: 10px;
+      }
+
+      .search-input {
+        width: 300px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+
+      .search-button {
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .search-button:hover {
+        background-color: #45a049;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="text-center">Gerenciamento de livros</h1>
+      <div class="search-container">
+        <form method="GET" action="">
+          <input
+            type="text"
+            name="search"
+            class="search-input"
+            placeholder="Pesquisar por livro ou aluno"
+          />
+          <input type="submit" value="Pesquisar" class="search-button" />
+        </form>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr class="header-row">
+            <th>Título do livro</th>
+            <th>Nome do aluno</th>
+            <th>Data de empréstimo</th>
+            <th>Data de devolução</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <script> //Backend trocar pra python
+            async function carregarEmprestimos() {
+              try {
+                const response = await fetch("/api/emprestimos"); // Substitua pela sua rota da API
+                const dados = await response.json();
+
+                const tbody = document.querySelector("#emprestimosTable tbody");
+                tbody.innerHTML = ""; // Limpa o conteúdo anterior
+
+                if (dados.length > 0) {
+                  dados.forEach((row, index) => {
+                    const tr = document.createElement("tr");
+                    const rowColorClass =
+                      index % 2 === 0 ? "even-row" : "odd-row";
+                    tr.className = rowColorClass;
+
+                    tr.innerHTML = `
+                    <td>${row.titulo}</td>
+                    <td>${row.nome}</td>
+                    <td>${formatarData(row.data_emprestimo)}</td>
+                    <td>${formatarData(row.data_devolucao)}</td>
+                `;
+                    tbody.appendChild(tr);
+                  });
+                } else {
+                  const tr = document.createElement("tr");
+                  tr.innerHTML =
+                    '<td colspan="4">Nenhum empréstimo encontrado.</td>';
+                  tbody.appendChild(tr);
+                }
+              } catch (error) {
+                console.error("Erro ao carregar empréstimos:", error);
+              }
+            }
+
+            function formatarData(data) {
+              const partes = data.split("-"); // Espera o formato 'YYYY-MM-DD'
+              return `${partes[2]}/${partes[1]}/${partes[0]}`; // Retorna 'DD/MM/YYYY'
+            }
+            async function darBaixa(emprestimoId) {
+              try {
+                const response = await fetch("darbaixa.php", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ emprestimo_id: emprestimoId }),
+                });
+                const result = await response.json();
+                alert(result.message); // Supondo que a resposta contém uma mensagem
+                carregarEmprestimos(); // Recarrega a tabela após a ação
+              } catch (error) {
+                console.error("Erro ao dar baixa:", error);
+              }
+            }
+
+            async function renovarLivro(emprestimoId) {
+              try {
+                const response = await fetch("renovarlivro.php", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ emprestimo_id: emprestimoId }),
+                });
+                const result = await response.json();
+                alert(result.message); // Supondo que a resposta contém uma mensagem
+                carregarEmprestimos(); // Recarrega a tabela após a ação
+              } catch (error) {
+                console.error("Erro ao renovar livro:", error);
+              }
+            }
+
+            // Chama a função ao carregar a página
+            carregarEmprestimos();
+          </script>
+        </tbody>
+      </table>
+    </div>
+    <div class="container">
+      <br /><br /><br />
+      <h3 style="text-align: center">
+        <a href="admin.html">Voltar para a página administrativa</a>
+      </h3>
+    </div>
+  </body>
+</html>

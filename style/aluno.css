@@ -1,0 +1,110 @@
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #444;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        label {
+            color: #666;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border-radius: 4px;
+            border: none;
+            font-size: 16px;
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        input[type="submit"] {
+            padding: 10px;
+            border-radius: 4px;
+            border: none;
+            background-color: #444;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #444;
+            color: #fff;
+            text-align: left;
+            padding: 10px;
+        }
+
+        td {
+            background-color: #fff;
+            color: #444;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f5f5f5;
+        }
+
+        a {
+            display: inline-block;
+            padding: 10px;
+            background-color: #444;
+            color: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        a:hover {
+            background-color: #666;
+        }
+
+        .reservar-btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
+        }

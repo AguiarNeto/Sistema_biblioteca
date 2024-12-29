@@ -1,0 +1,15 @@
+
+ .button-container {
+  display: inline-block;
+  margin-right: 10px;
+  background-color: #4CAF50;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  margin-right: 10px;
+}
+
+table thead th {
+  text-align: center; /* Adicionado para centralizar o cabeçalho */
+}

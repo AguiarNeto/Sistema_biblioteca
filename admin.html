@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="admin.css">
+    <script>
+        // Verifica se o usuário está logado
+function checkSession() {
+    const email = localStorage.getItem('email'); // Substitua por `document.cookie` se usar cookies
+
+    if (!email) {
+        // Redireciona para a página de login
+        window.location.href = 'login.html'; // Altere para o caminho correto
+    }
+}
+
+// Chama a função para verificar a sessão
+checkSession();
+
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página do administrador</title>
+    <style>
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .button:hover {
+            background-color: #3E8E41;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .button2 {
+            display: inline-block;
+            padding: 30px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Bem vindo(a), <script>localStorage.getItem('name')</script>!</h1>
+        <h3 class="text-center">Aqui você tem acesso a diversas funcionalidades.</h3> <br><br><br>
+        <div class="center">
+            <a href="cadastrar_livro.html" class="button">Cadastrar novo Livro</a>
+            <a href="gerar_relatorio.php" class="button">Gerar Relatório</a>
+            <a href="baixarlivro.html" class="button">Gerenciamento de Livros</a> <!-- Novo botão adicionado -->
+            <a href="dados_aluno.html" class="button">Recuperar Senha do Aluno</a>
+            <a href="maiorlivro.php" class="button">Livros mais Emprestados </a>
+            <a href="maioraluno.php" class="button">Aluno com mais Livros Emprestados </a>
+        </div>
+        <br><br><br>
+        <h3 style="text-align: center;"><a href="login.html">Voltar para a página de Login</a></h3>
+    </div>
+</body>
+</html>

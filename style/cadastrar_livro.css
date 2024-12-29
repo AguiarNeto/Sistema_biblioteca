@@ -1,0 +1,62 @@
+/* Estilos personalizados para a página de cadastro de livros */
+.container {
+    width: 300px;
+    margin: 0 auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+}
+
+.container h2.text-center {
+    text-align: center;
+}
+
+.container form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.container form input[type="text"],
+.container form input[type="number"] {
+    display: block;
+    width: 100%;
+    height: 30px;
+    padding: 5px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+}
+
+.container form input[type="submit"] {
+    display: block;
+    width: 100%;
+    height: 30px;
+    padding: 5px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #4CAF50;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.container form input[type="submit"]:hover {
+    background-color: #3e8e41;
+}
+
+.container form {
+    text-align: center;
+}
+.container a {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+}

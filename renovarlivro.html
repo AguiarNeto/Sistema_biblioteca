@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovar Empréstimo</title>
+</head>
+<body>
+    <h1>Renovar Empréstimo</h1>
+    <label for="emprestimo_id">ID do Empréstimo:</label>
+    <input type="number" id="emprestimo_id" placeholder="Digite o ID" />
+    <button id="botao-renovar">Renovar</button>
+
+    <script>
+        // Simulação de dados do empréstimo
+let emprestimos = [
+    { id: 1, data_emprestimo: '2024-06-01', data_devolucao: '2024-06-08' },
+    { id: 2, data_emprestimo: '2024-06-02', data_devolucao: '2024-06-09' },
+];
+
+// Função para renovar o empréstimo
+function renovarEmprestimo(emprestimo_id) {
+    // Procura o empréstimo pelo ID
+    const emprestimo = emprestimos.find(e => e.id === emprestimo_id);
+
+    if (emprestimo) {
+        // Calcula novas datas
+        let novaDataEmprestimo = new Date(emprestimo.data_emprestimo);
+        let novaDataDevolucao = new Date(emprestimo.data_devolucao);
+
+        novaDataEmprestimo.setDate(novaDataEmprestimo.getDate() + 7);
+        novaDataDevolucao.setDate(novaDataDevolucao.getDate() + 7);
+
+        // Atualiza os dados no "banco local"
+        emprestimo.data_emprestimo = novaDataEmprestimo.toISOString().split('T')[0];
+        emprestimo.data_devolucao = novaDataDevolucao.toISOString().split('T')[0];
+
+        alert('Livro renovado com sucesso!\nNova data de devolução: ' + emprestimo.data_devolucao);
+    } else {
+        alert('Empréstimo não encontrado.');
+    }
+}
+
+// Simulação de clique para renovar o empréstimo
+document.getElementById('botao-renovar').addEventListener('click', () => {
+    const emprestimo_id = parseInt(document.getElementById('emprestimo_id').value);
+    renovarEmprestimo(emprestimo_id);
+});
+
+    </script>
+</body>
+</html>

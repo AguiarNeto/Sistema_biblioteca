@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        padding-top: 50px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 80%;
+        max-width: 600px;
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      .container {
+        margin-top: 20px;
+      }
+    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alunos com Mais Livros Emprestados</title>
+  </head>
+  <body>
+    <script>
+      function checkSession() {
+        const email = localStorage.getItem("email"); // Substitua por `document.cookie` se usar cookies
+
+        if (!email) {
+          // Redireciona para a página de login
+          window.location.href = "login.html";
+        }
+      }
+      const express = require("express");
+      const session = require("express-session");
+      const mysql = require("mysql2");
+
+      // Configuração do servidor Express
+      const app = express();
+      app.use(express.urlencoded({ extended: true })); // Para processar dados enviados via POST
+      app.use(express.json());
+
+      // Configuração da sessão
+      app.use(
+        session({
+          secret: "", // Substitua por uma chave secreta segura
+          resave: false,
+          saveUninitialized: false,
+        })
+      );
+
+      // Configuração da conexão com o banco de dados
+      const connection = mysql.createConnection({
+        host: "",
+        user: "",
+        password: "",
+        database: "",
+      });
+
+      // Middleware para verificar autenticação do administrador
+      const verificarAutenticacao = (req, res, next) => {
+        if (!req.session.email) {
+          return res.redirect("/login.html"); // Redireciona para a página de login
+        }
+        next();
+      };
+
+      // Rota para exibir a página inicial (autenticada)
+      app.get("/", verificarAutenticacao, (req, res) => {
+        res.send("Bem-vindo, administrador!");
+      });
+
+      // Rota para lidar com a pesquisa
+      app.post("/pesquisar", verificarAutenticacao, (req, res) => {
+        const searchTerm = req.body.search || ""; // Obter o termo de pesquisa do corpo da requisição
+
+        // Consultar os dados dos alunos com base no nome fornecido
+        const sql = `SELECT email, senha FROM alunos WHERE nome LIKE ?`;
+        connection.query(sql, [`%${searchTerm}%`], (err, results) => {
+          if (err) {
+            console.error("Erro ao executar a consulta:", err);
+            return res.status(500).send("Erro no servidor");
+          }
+
+          // Retorna os resultados da consulta
+          res.json(results);
+        });
+      });
+
+      // Rota para login (simples exemplo)
+      app.get("/login", (req, res) => {
+        res.send("Página de login"); // Implemente sua lógica de login aqui
+      });
+
+      // Inicializar o servidor
+      app.listen(3000, () => {
+        console.log("Servidor rodando na porta 3000");
+      });
+    </script>
+  </body>
+</html>

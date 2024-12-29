@@ -1,0 +1,72 @@
+/* Estilos gerais */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+  }
+  h1, h2 {
+    text-align: center;
+  }
+  form {
+    width: 300px;
+    margin: 0 auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  }
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  input[type="email"], input[type="password"], input[type="submit"] {
+    display: block;
+    width: 100%;
+    height: 30px;
+    padding: 5px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+  }
+  input[type="submit"] {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  input[type="submit"]:hover {
+    background-color: #3e8e41;
+  }
+  a {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  /* Estilos personalizados para o sistema de login */
+  form h2 {
+    margin-top: 0;
+  }
+  form p {
+    margin-bottom: 20px;
+  }
+  form input[type="email"] {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+  form input[type="password"] {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+  form input[type="submit"] {
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
+  
